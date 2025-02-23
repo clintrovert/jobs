@@ -1,11 +1,6 @@
 name: "Fetch SpaceX Job Titles"
-description: "Fetches job titles from SpaceX careers page and comments on the PR or commit."
+description: "Fetches job titles from SpaceX careers page and logs them."
 author: "Your Name"
-
-inputs:
-  github_token:
-    description: "GitHub token for commenting on PR"
-    required: true
 
 runs:
   using: "composite"
@@ -27,14 +22,8 @@ runs:
         echo "Extracted job titles:"
         cat job_titles.txt
 
-    - name: Comment on PR or Commit
+    - name: Output Job Titles
       shell: bash
-      env:
-        GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        if [ -s job_titles.txt ]; then
-          COMMENT_BODY=$(echo -e "### SpaceX Job Titles Found:\n\n$(cat job_titles.txt | sed 's/^/- /')")
-          gh api repos/${{ github.repository }}/issues/${{ github.event.number }}/comments -f body="$COMMENT_BODY"
-        else
-          echo "No job titles found."
-        fi
+        echo "### SpaceX Job Titles Found:" >> $GITHUB_STEP_SUMMARY
+        cat job_titles.txt | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
