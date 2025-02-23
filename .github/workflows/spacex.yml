@@ -1,29 +1,31 @@
-name: "Fetch SpaceX Job Titles"
-description: "Fetches job titles from SpaceX careers page and logs them."
-author: "Your Name"
+name: Fetch SpaceX Jobs
 
-runs:
-  using: "composite"
-  steps:
-    - name: Install Dependencies
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y pup
+on:
+  workflow_dispatch: # Allows manual execution from GitHub Actions UI
 
-    - name: Fetch SpaceX Careers Page
-      shell: bash
-      run: curl -sSL "https://www.spacex.com/careers/jobs?search=software&location=bastrop%252C%2520tx" -o spacex_jobs.html
+jobs:
+  fetch-jobs:
+    runs-on: ubuntu-latest
 
-    - name: Extract Job Titles
-      shell: bash
-      run: |
-        cat spacex_jobs.html | pup 'h2 text{}' > job_titles.txt
-        echo "Extracted job titles:"
-        cat job_titles.txt
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Output Job Titles
-      shell: bash
-      run: |
-        echo "### SpaceX Job Titles Found:" >> $GITHUB_STEP_SUMMARY
-        cat job_titles.txt | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pup
+
+      - name: Fetch SpaceX Careers Page
+        run: curl -sSL "https://www.spacex.com/careers/jobs?search=software&location=bastrop%252C%2520tx" -o spacex_jobs.html
+
+      - name: Extract Job Titles
+        run: |
+          cat spacex_jobs.html | pup 'h2 text{}' > job_titles.txt
+          echo "Extracted job titles:"
+          cat job_titles.txt
+
+      - name: Output Job Titles
+        run: |
+          echo "### SpaceX Job Titles Found:" >> $GITHUB_STEP_SUMMARY
+          cat job_titles.txt | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
