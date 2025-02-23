@@ -1,0 +1,40 @@
+name: "Fetch SpaceX Job Titles"
+description: "Fetches job titles from SpaceX careers page and comments on the PR or commit."
+author: "Your Name"
+
+inputs:
+  github_token:
+    description: "GitHub token for commenting on PR"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pup
+
+    - name: Fetch SpaceX Careers Page
+      shell: bash
+      run: curl -sSL "https://www.spacex.com/careers/jobs?search=software&location=bastrop%252C%2520tx" -o spacex_jobs.html
+
+    - name: Extract Job Titles
+      shell: bash
+      run: |
+        cat spacex_jobs.html | pup 'h2 text{}' > job_titles.txt
+        echo "Extracted job titles:"
+        cat job_titles.txt
+
+    - name: Comment on PR or Commit
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        if [ -s job_titles.txt ]; then
+          COMMENT_BODY=$(echo -e "### SpaceX Job Titles Found:\n\n$(cat job_titles.txt | sed 's/^/- /')")
+          gh api repos/${{ github.repository }}/issues/${{ github.event.number }}/comments -f body="$COMMENT_BODY"
+        else
+          echo "No job titles found."
+        fi
