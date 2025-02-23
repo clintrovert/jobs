@@ -12,20 +12,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pup
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
 
       - name: Fetch SpaceX Careers Page
         run: curl -sSL "https://www.spacex.com/careers/jobs?search=software&location=bastrop%252C%2520tx" -o spacex_jobs.html
 
       - name: Extract Job Titles
         run: |
-          cat spacex_jobs.html | pup 'h2 text{}' > job_titles.txt
+          cat spacex_jobs.html | xmllint --html --xpath "//h2/text()" - 2>/dev/null | sed 's/\n/\n/g' > job_titles.txt
           echo "Extracted job titles:"
-          cat job_titles.txt
+          cat job_titles.txt || echo "No job titles found."
 
       - name: Output Job Titles
         run: |
           echo "### SpaceX Job Titles Found:" >> $GITHUB_STEP_SUMMARY
-          cat job_titles.txt | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+          cat job_titles.txt | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY || echo "No titles found."
